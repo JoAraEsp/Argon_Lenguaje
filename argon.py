@@ -249,6 +249,8 @@ class ArgonApp:
         self.text.pack(padx=10, pady=10)
         self.validate_button = tk.Button(root, text="Validar", command=self.validate)
         self.validate_button.pack(pady=5)
+        self.grammar_label = tk.Label(root, text="Cuando presione validar verá un mensaje que afirme si fue correcta su entrada, si hay error se indicará. Entiéndase 'po' como posición")
+        self.grammar_label.pack(pady=10)
 
     def validate(self):
         code = self.text.get("1.0", tk.END).strip()
@@ -257,7 +259,9 @@ class ArgonApp:
         if is_valid:
             messagebox.showinfo("Validación", "El código es válido según la gramática de Argon.")
         else:
-            messagebox.showerror("Error", self.parser.error)
+            messagebox.showerror(
+                "Error", f'{self.parser.error}\nLa posición del error es: po{self.parser.indice}'
+            )
 
 if __name__ == "__main__":
     root = tk.Tk()
