@@ -155,7 +155,6 @@ class ArgonParser:
             return False
 
     def elif_condicional(self):
-
         dentro_de_elif = False
         while self.match(r'elif'):
             dentro_de_elif = True
@@ -216,15 +215,16 @@ class ArgonParser:
                 resto_izquierda = self.match(r'[a-zA-Z0-9]*')
             if self.match(operadores):
                 self.consumir_espacios()
-                derecha = self.match(r'[a-zA-Z][a-zA-Z0-9]*')
+                derecha = self.match(r'[a-zA-Z][a-zA-Z0-9]*|\d+(\.\d+)?|".*"')
                 if derecha:
-                    resto_derecha = self.match(r'[a-zA-Z0-9]*')
-                    while resto_derecha:
-                        derecha += resto_derecha
+                    if derecha[0].isalpha():
                         resto_derecha = self.match(r'[a-zA-Z0-9]*')
+                        while resto_derecha:
+                            derecha += resto_derecha
+                            resto_derecha = self.match(r'[a-zA-Z0-9]*')
                     return True
                 else:
-                    self.error = 'Error: se esperaba un identificador después del operador de comparación'
+                    self.error = 'Error: se esperaba un identificador, valor numérico o string después del operador de comparación'
                     return False
             else:
                 self.error = 'Error: se esperaba un operador de comparación después del identificador'
