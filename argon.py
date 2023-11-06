@@ -21,36 +21,26 @@ class ArgonParser:
         return None
 
     def declaracion_variable(self):
-        tipo = self.match(r'(int|float|bool|string|char)')
-        if tipo:
-            nombre = self.match(r'[a-zA-Z][a-zA-Z0-9]*')
-            if nombre:
-                if self.match(r':'):
-                    if self.match(r'='):
-                        if tipo in ['int', 'float']:
-                            valor = self.match(r'\d+(\.\d+)?')
-                        elif tipo == 'bool':
-                            valor = self.match(r'(true|false)')
-                        elif tipo == 'string':
-                            valor = self.match(r'"[^"]*"')
-                        elif tipo == 'char':
-                            valor = self.match(r"'.'")
-                        if valor:
-                            return True
-                        else:
-                            self.error = f'Error: valor incorrecto para la variable {nombre}'
-                            return False
-                    else:
-                        self.error = f'Error: falta el signo igual en la asignación de valor para la variable {nombre}'
-                        return False
-                else:
-                    self.error = f'Error: falta el signo dos puntos para la variable {nombre}'
-                    return False
+        match_obj = self.match(r'(int|float|bool|string|char):[a-zA-Z][a-zA-Z0-9]*=')
+        if match_obj:
+            tipo, nombre = re.match(r'(int|float|bool|string|char):([a-zA-Z][a-zA-Z0-9]*)=', match_obj).groups()
+            if tipo == 'int':
+                valor = self.match(r'\d+')
+            elif tipo == 'float':
+                valor = self.match(r'\d+\.\d+')
+            elif tipo == 'bool':
+                valor = self.match(r'true|false')
+            elif tipo == 'string':
+                valor = self.match(r'"[^"]*"')
+            elif tipo == 'char':
+                valor = self.match(r"'.'")
+            if valor:
+                return True
             else:
-                self.error = f'Error: nombre de variable inválido'
+                self.error = f'Error: valor incorrecto para la variable {nombre}'
                 return False
         else:
-            self.error = f'Error: tipo de variable no reconocido'
+            self.error = f'Error en la declaración de variable en la posición {self.indice}'
             return False
 
     def funcion(self):
@@ -234,13 +224,21 @@ class ArgonParser:
             else:
                 self.error = 'Error: se esperaba un identificador o valor numérico en la comparación'
                 return False
+            
+    def generar_mapa_posiciones(self):
+        # Esta función generará el mapa de posiciones hasta el punto actual
+        return ' -> '.join([f'po{i}' for i in range(self.indice + 1)])
 
     def analizar(self):
         while self.indice < len(self.entrada):
             if not self.contenido():
                 self.error = f'Error de sintaxis en la posición {self.indice}: {self.entrada[self.indice:]}'
+                self.error += '\n' + self.generar_mapa_posiciones()
+                self.error += f'\nValor inválido en po{self.indice}: {repr(self.entrada[self.indice])}'
                 return False
+        self.error = 'Validación correcta.\n' + self.generar_mapa_posiciones()
         return True
+
 
 class ArgonApp:
     def __init__(self, root):
@@ -257,11 +255,9 @@ class ArgonApp:
         self.parser = ArgonParser(code)
         is_valid = self.parser.analizar()
         if is_valid:
-            messagebox.showinfo("Validación", "El código es válido según la gramática de Argon.")
+            messagebox.showinfo("Validación", self.parser.error)
         else:
-            messagebox.showerror(
-                "Error", f'{self.parser.error}\nLa posición del error es: po{self.parser.indice}'
-            )
+            messagebox.showerror("Error", self.parser.error)
 
 if __name__ == "__main__":
     root = tk.Tk()
